@@ -116,6 +116,11 @@ function afficher() {
   if (!DATA) return;
   const m = DATA.d[choix], c = m.current, dl = m.daily, h = m.hourly, nom = VILLAGES[choix][0];
   $('ciel').className = 'ciel ' + ambiance(c.weather_code, c.is_day);
+  // vrai soleil / vraie lune dans le ciel, à leur position réelle
+  const mn = (iso) => +iso.slice(11, 13) * 60 + +iso.slice(14, 16);
+  const g0 = genre(c.weather_code, c.is_day);
+  majAstre({ maintenant: mn(c.time), lever: mn(dl.sunrise[0]), coucher: mn(dl.sunset[0]), jour: !!c.is_day, phase: lune(Date.now())[0],
+             voile: { nuage: 0.85, pluie: 1, bruine: 0.95, orage: 1, brouillard: 0.9, eclaircie: 0.35, 'eclaircie-nuit': 0.35 }[g0] || 0 });
   $('nom').textContent = nom.charAt(0) + nom.slice(1).toLowerCase();
   $('temp').textContent = r(c.temperature_2m) + '°';
   $('cond').textContent = libelle(c.weather_code, c.is_day);
@@ -154,6 +159,8 @@ function afficher() {
 
   // tuiles (même présentation que l'appli Météo de l'iPhone)
   $('tuiles').innerHTML = tuiles(c, dl, h, k0, nom);
+  const peindreLune = () => document.querySelectorAll('.lune-tuile').forEach((cv) => { const x = cv.getContext('2d'); x.clearRect(0, 0, 240, 240); dessinerLune(x, 120, 120, 100, +cv.dataset.phase); });
+  if (LUNE_IMG.complete) peindreLune(); else LUNE_IMG.addEventListener('load', peindreLune, { once: true });
 
   // alertes
   const al = [];
@@ -259,7 +266,7 @@ function tuiles(c, dl, h, k0, nom) {
   return moy + `
     <div class="tuile">${titre('vent', 'VENT')}<div class="centre">${boussole(r(c.wind_speed_10m), (c.wind_direction_10m + 180) % 360)}</div>
       <p>Rafales : ${r(c.wind_gusts_10m)} km/h ${dir(c.wind_direction_10m)}</p></div>
-    <div class="tuile">${titre('lune', ln.toUpperCase())}<div class="centre">${lunePhoto(lp)}</div><p class="c">Éclairée à ${illum} %</p></div>
+    <div class="tuile">${titre('lune', ln.toUpperCase())}<div class="centre"><canvas class="lune-tuile" width="240" height="240" data-phase="${lp}"></canvas></div><p class="c">Éclairée à ${illum} %</p></div>
     <div class="tuile">${titre('coucher', soleilPasse || avantLever ? 'LEVER' : 'COUCHER')}<div class="gros">${soleilPasse ? dl.sunrise[1].slice(11, 16) : avantLever ? lev : cou}</div>${courbeSoleil(u)}
       <p>${soleilPasse || avantLever ? 'Coucher : ' + cou : 'Lever : ' + lev}</p></div>
     <div class="tuile">${titre('uv', 'INDICE UV')}<div class="gros">${r(uv)}</div><div class="moy">${niv}</div><div class="uvbar"><em style="left:${Math.min(uv, 12) / 12 * 100}%"></em></div><p>${conseilUV}</p></div>

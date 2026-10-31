@@ -19,6 +19,7 @@
 </head>
 <body>
 <div id="ciel" class="ciel jour-clair"></div>
+<canvas id="astre" class="astre" aria-hidden="true"></canvas>
 <div id="mini" class="mini"></div>
 <main id="app">
   <header class="entete">
@@ -31,6 +32,7 @@
     <div id="temp" class="temp">--°</div>
     <div id="cond" class="cond">Chargement…</div>
     <div id="hl" class="hl"></div>
+    <div class="bande-rdc" aria-hidden="true"></div>
   </header>
 
   <button id="installer" class="installer cache">⬇ Installer l'application sur cet appareil</button>
@@ -75,6 +77,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="astre.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
