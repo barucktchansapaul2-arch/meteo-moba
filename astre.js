@@ -94,9 +94,9 @@ function majAstre(infos) { ASTRE.infos = infos; }   // { maintenant, lever, couc
       // la lune traverse le ciel pendant la nuit
       const duree = 1440 - coucher + lever, ecoule = (maintenant >= coucher ? maintenant - coucher : maintenant + 1440 - coucher);
       const u = Math.min(Math.max(ecoule / duree, 0), 1);
-      const mx = W * (0.12 + 0.76 * u), my = H * (0.8 - 0.6 * Math.sin(Math.PI * u));
+      const mx = W * (0.14 + 0.72 * u), my = H * (0.36 - 0.24 * Math.sin(Math.PI * u));
       ctx.globalAlpha = 1 - voile * 0.6;
-      dessinerLune(ctx, mx, my, Math.min(W, H) * 0.09, phase);
+      dessinerLune(ctx, mx, my, Math.min(W, H) * 0.075, phase);
       ctx.globalAlpha = 1;
     }
   }
