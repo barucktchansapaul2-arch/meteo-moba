@@ -287,6 +287,7 @@ function majCarte() {
     carte = L.map('carte', { zoomControl: false, attributionControl: true }).setView([-7.45, 29.75], 8);
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 13, attribution: 'Imagerie © Esri' }).addTo(carte);
     calqueCarte = L.layerGroup().addTo(carte);
+    carte.attributionControl.setPrefix(false);          // pas de mention « Leaflet » en anglais
   }
   calqueCarte.clearLayers();
   DATA.d.forEach((m, i) => {
