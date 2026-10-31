@@ -67,6 +67,7 @@ function ambiance(code, jour) {
 async function chargerVillages() {
   const rep = await fetch('villages.json');
   VILLAGES = await rep.json();
+  try { NORMALES = await (await fetch('normales.json')).json(); } catch (e) { NORMALES = null; }
   if (choix >= VILLAGES.length) choix = 0;
 }
 
@@ -81,7 +82,7 @@ async function telecharger() {
   const p = new URLSearchParams({
     latitude: VILLAGES.map((v) => v[1]).join(','), longitude: VILLAGES.map((v) => v[2]).join(','),
     current: 'temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,precipitation,uv_index,surface_pressure',
-    hourly: 'temperature_2m,weather_code,is_day,precipitation_probability,visibility',
+    hourly: 'temperature_2m,weather_code,is_day,precipitation_probability,visibility,uv_index',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,sunrise,sunset,uv_index_max,wind_speed_10m_max',
     timezone: 'Africa/Lubumbashi', forecast_days: 10,
   });
@@ -118,6 +119,7 @@ function afficher() {
   $('nom').textContent = nom.charAt(0) + nom.slice(1).toLowerCase();
   $('temp').textContent = r(c.temperature_2m) + '°';
   $('cond').textContent = libelle(c.weather_code, c.is_day);
+  $('mini').textContent = `${nom.charAt(0) + nom.slice(1).toLowerCase()}  ${r(c.temperature_2m)}° | ${libelle(c.weather_code, c.is_day)}`;
   $('hl').textContent = `↑ ${r(dl.temperature_2m_max[0])}°  ↓ ${r(dl.temperature_2m_min[0])}°`;
   $('etat').textContent = DATA.enLigne ? '● EN LIGNE · TEMPS RÉEL' : enCours ? '● MISE À JOUR…' : '● HORS LIGNE';
   $('etat').className = 'etat ' + (DATA.enLigne ? 'ok' : enCours ? '' : 'ko');
@@ -150,32 +152,8 @@ function afficher() {
       `<span class="mn">${r(dl.temperature_2m_min[i])}°</span><div class="barre-t"><i style="left:${a}%;right:${100 - b}%;background:linear-gradient(90deg,${couleurT(dl.temperature_2m_min[i])},${couleurT(dl.temperature_2m_max[i])})"></i>${point}</div><span>${r(dl.temperature_2m_max[i])}°</span></div>`;
   }).join('');
 
-  // tuiles
-  const uv = c.uv_index ?? dl.uv_index_max[0];
-  const niv = uv < 3 ? 'Faible' : uv < 6 ? 'Modéré' : uv < 8 ? 'Élevé' : uv < 11 ? 'Très élevé' : 'Extrême';
-  const lev = dl.sunrise[0].slice(11, 16), cou = dl.sunset[0].slice(11, 16);
-  const minutes = (s) => +s.slice(0, 2) * 60 + +s.slice(3, 5);
-  const u = Math.min(Math.max((minutes(c.time.slice(11, 16)) - minutes(lev)) / (minutes(cou) - minutes(lev)), 0), 1);
-  const sx = 10 + u * 120, sy = 60 - Math.sin(u * Math.PI) * 44;
-  const ventA = (c.wind_direction_10m + 180) % 360;
-  const vis = (h.visibility[k0] || 0) / 1000;
-  const [lp, ln] = lune(Date.now());
-  const om = Math.cos(2 * Math.PI * lp) * 26;
-  const ressentiTxt = c.apparent_temperature > c.temperature_2m + 1 ? 'Le ressenti est plus élevé que la température réelle.' : c.apparent_temperature < c.temperature_2m - 1 ? 'Le ressenti est plus frais que la température réelle.' : 'Ressenti proche de la température réelle.';
-  const proch = dl.precipitation_sum.findIndex((x, i) => i > 0 && x >= 0.5);
-  $('tuiles').innerHTML = `
-    <div class="tuile"><div class="tt">☀︎ INDICE UV</div><div class="gros">${r(uv)}</div><div class="moy">${niv}</div><div class="uvbar"><em style="left:${Math.min(uv, 12) / 12 * 100}%"></em></div><p>${uv >= 6 ? 'Protégez-vous du soleil.' : 'Risque limité.'}</p></div>
-    <div class="tuile"><div class="tt">🌅 COUCHER</div><div class="gros">${cou}</div>
-      <svg width="140" height="66" viewBox="0 0 140 66"><path d="M10 60 Q70 -28 130 60" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2"/><line x1="0" y1="60" x2="140" y2="60" stroke="rgba(255,255,255,.3)"/><circle cx="${sx}" cy="${sy}" r="6" fill="#fff"/></svg><p>Lever : ${lev}</p></div>
-    <div class="tuile"><div class="tt">💨 VENT</div><div style="display:flex;align-items:center;justify-content:space-between"><div><div class="gros">${r(c.wind_speed_10m)}</div><div class="moy">km/h</div></div>
-      <svg width="86" height="86" viewBox="0 0 86 86"><circle cx="43" cy="43" r="38" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-dasharray="2 4"/>${['N', 'E', 'S', 'O'].map((t, i) => `<text x="${43 + Math.sin(i * Math.PI / 2) * 28}" y="${47 - Math.cos(i * Math.PI / 2) * 28}" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">${t}</text>`).join('')}<g transform="rotate(${ventA} 43 43)"><line x1="43" y1="72" x2="43" y2="16" stroke="#fff" stroke-width="3"/><path d="M43 10l-6 10h12z" fill="#fff"/></g></svg></div>
-      <p>Rafales : ${r(c.wind_gusts_10m)} km/h ${dir(c.wind_direction_10m)}</p></div>
-    <div class="tuile"><div class="tt">🌡 RESSENTI</div><div class="gros">${r(c.apparent_temperature)}°</div><p>${ressentiTxt}</p></div>
-    <div class="tuile"><div class="tt">💧 PRÉCIPITATIONS</div><div class="gros">${(dl.precipitation_sum[0] || 0).toFixed(1)} mm</div><div class="moy">aujourd'hui</div><p>${proch > 0 ? `Prochaines : ${(dl.precipitation_sum[proch]).toFixed(1)} mm ${proch === 1 ? 'demain' : JOURS_L[dateDe(dl.time[proch]).getDay()]}.` : 'Pas de pluie notable prévue.'}</p></div>
-    <div class="tuile"><div class="tt">👁 VISIBILITÉ</div><div class="gros">${vis.toFixed(0)} km</div><p>${vis >= 10 ? 'Vue parfaitement dégagée.' : 'Visibilité réduite.'}</p></div>
-    <div class="tuile"><div class="tt">💦 HUMIDITÉ</div><div class="gros">${r(c.relative_humidity_2m)} %</div><p>Pression : ${r(c.surface_pressure || 0)} hPa</p></div>
-    <div class="tuile"><div class="tt">🌙 LUNE</div><div class="moy">${ln}</div>
-      <svg width="70" height="70" viewBox="0 0 70 70"><circle cx="35" cy="35" r="26" fill="#e8edf5"/><path d="M35 9 A26 26 0 0 ${lp < 0.5 ? 0 : 1} 35 61 A${Math.abs(om)} 26 0 0 ${(lp < 0.5) === (om > 0) ? 1 : 0} 35 9z" fill="rgba(10,25,60,.85)"/></svg></div>`;
+  // tuiles (même présentation que l'appli Météo de l'iPhone)
+  $('tuiles').innerHTML = tuiles(c, dl, h, k0, nom);
 
   // alertes
   const al = [];
@@ -190,6 +168,108 @@ function afficher() {
   $('points').innerHTML = VILLAGES.map((_, i) => `<i class="${i === choix ? 'on' : ''}"></i>`).join('');
   remplirListe(); majCarte();
 }
+
+// ------------------------------------------------------------------ petites icônes de titre (traits fins, comme sur l'iPhone)
+const PICTO = {
+  moyennes: '<path d="M2 13l4-5 3 3 5-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 2v12h13" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  vent: '<path d="M1 6h9a2.5 2.5 0 1 0-2.5-2.5M1 10h12a2.5 2.5 0 1 1-2.5 2.5M1 8h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  lune: '<path d="M10 1.5a6.5 6.5 0 1 0 4.5 11A5.5 5.5 0 0 1 10 1.5z" fill="currentColor"/>',
+  coucher: '<path d="M8 2v5m-3-2l3 3 3-3M2 12h12M4 9.5a4 4 0 0 1 8 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M1 14.5h14" stroke="currentColor" stroke-width="1.4"/>',
+  uv: '<circle cx="8" cy="8" r="3" fill="currentColor"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M3 13l1.4-1.4M11.6 4.4L13 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  ressenti: '<path d="M6 2.5a2 2 0 0 1 4 0v6.3a3.5 3.5 0 1 1-4 0z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="11.5" r="1.6" fill="currentColor"/><path d="M8 11V6" stroke="currentColor" stroke-width="1.5"/>',
+  pluie: '<path d="M8 1.5C6 5 3.5 7.5 3.5 10a4.5 4.5 0 0 0 9 0C12.5 7.5 10 5 8 1.5z" fill="currentColor"/>',
+  visibilite: '<path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2.4" fill="currentColor"/>',
+  humidite: '<path d="M8 1.5C6 5 3.5 7.5 3.5 10a4.5 4.5 0 0 0 9 0C12.5 7.5 10 5 8 1.5z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 11a2 2 0 0 0 2 2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+};
+const titre = (p, t) => `<div class="tt"><svg width="15" height="15" viewBox="0 0 16 16">${PICTO[p]}</svg>${t}</div>`;
+let NORMALES = null;
+
+function lunePhoto(p) {
+  // lune réaliste : disque gris clair avec mers et cratères, partie dans l'ombre selon la phase
+  const k = Math.cos(2 * Math.PI * p), rx = Math.max(Math.abs(k) * 46, 0.01), gibbeuse = k < 0;
+  // croissante : ombre à gauche ; décroissante : ombre à droite ; le terminateur est une demi-ellipse
+  const ombre = p < 0.5
+    ? `M50 4 A46 46 0 0 0 50 96 A${rx} 46 0 0 ${gibbeuse ? 1 : 0} 50 4z`
+    : `M50 4 A46 46 0 0 1 50 96 A${rx} 46 0 0 ${gibbeuse ? 0 : 1} 50 4z`;
+  return `<svg width="118" height="118" viewBox="0 0 100 100"><defs>
+      <radialGradient id="lg" cx="42%" cy="38%" r="65%"><stop offset="0" stop-color="#f4f6fa"/><stop offset=".7" stop-color="#c9d1dd"/><stop offset="1" stop-color="#9aa6b8"/></radialGradient>
+      <filter id="fl"><feGaussianBlur stdDeviation="1.2"/></filter></defs>
+    <circle cx="50" cy="50" r="46" fill="url(#lg)"/>
+    <g fill="#8e99ab" opacity=".55" filter="url(#fl)"><ellipse cx="38" cy="36" rx="13" ry="10"/><ellipse cx="60" cy="30" rx="9" ry="7"/><ellipse cx="57" cy="52" rx="12" ry="9"/><ellipse cx="34" cy="62" rx="8" ry="6"/><ellipse cx="68" cy="68" rx="7" ry="5"/></g>
+    <g fill="none" stroke="#aeb7c6" stroke-width="1"><circle cx="46" cy="78" r="5"/><circle cx="74" cy="44" r="3.5"/><circle cx="26" cy="46" r="3"/><circle cx="56" cy="84" r="2.5"/></g>
+    <path d="${ombre}" fill="rgba(12,40,90,.72)"/></svg>`;
+}
+
+function boussole(vitesse, deg) {
+  let graduations = '';
+  for (let i = 0; i < 72; i++) {
+    const a = i * 5 * Math.PI / 180, long = i % 18 === 0 ? 0 : i % 2 === 0 ? 7 : 4;
+    if (!long) continue;
+    graduations += `<line x1="${60 + Math.sin(a) * 54}" y1="${60 - Math.cos(a) * 54}" x2="${60 + Math.sin(a) * (54 - long)}" y2="${60 - Math.cos(a) * (54 - long)}" stroke="rgba(255,255,255,${i % 2 ? .35 : .6})" stroke-width="1.2"/>`;
+  }
+  const lettres = [['N', 0], ['E', 90], ['S', 180], ['O', 270]].map(([t, a]) =>
+    `<text x="${60 + Math.sin(a * Math.PI / 180) * 47}" y="${64 - Math.cos(a * Math.PI / 180) * 47}" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">${t}</text>`).join('');
+  // flèche : d'où vient le vent (point blanc) vers où il va (pointe)
+  return `<svg width="130" height="130" viewBox="0 0 120 120">${graduations}${lettres}
+    <g transform="rotate(${deg} 60 60)"><line x1="60" y1="14" x2="60" y2="38" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="60" cy="14" r="5" fill="#fff"/>
+      <line x1="60" y1="82" x2="60" y2="104" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M60 110l-6-10h12z" fill="#fff"/></g>
+    <text x="60" y="61" fill="#fff" font-size="22" font-weight="600" text-anchor="middle">${vitesse}</text>
+    <text x="60" y="78" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">km/h</text></svg>`;
+}
+
+function courbeSoleil(u) {
+  // sinusoïde jour/nuit : partie haute = jour, ligne d'horizon, point du soleil à l'heure actuelle
+  let pts = '';
+  for (let i = 0; i <= 60; i++) { const x = i / 60; pts += `${(x * 180).toFixed(1)},${(52 - Math.sin((x - 0.25) * 2 * Math.PI) * 34).toFixed(1)} `; }
+  const xs = 0.25 + u * 0.5, sx = xs * 180, sy = 52 - Math.sin((xs - 0.25) * 2 * Math.PI) * 34;
+  return `<svg width="100%" height="96" viewBox="0 0 180 96" preserveAspectRatio="none">
+    <defs><clipPath id="haut"><rect x="0" y="0" width="180" height="52"/></clipPath><clipPath id="bas"><rect x="0" y="52" width="180" height="44"/></clipPath></defs>
+    <polyline points="${pts}" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="3" clip-path="url(#haut)"/>
+    <polyline points="${pts}" fill="none" stroke="rgba(10,40,90,.55)" stroke-width="3" clip-path="url(#bas)"/>
+    <line x1="0" y1="52" x2="180" y2="52" stroke="rgba(255,255,255,.55)" stroke-width="1"/>
+    <circle cx="${sx}" cy="${sy}" r="6" fill="#fff" style="filter:drop-shadow(0 0 5px #fff)"/></svg>`;
+}
+
+function tuiles(c, dl, h, k0, nom) {
+  const uv = c.uv_index ?? dl.uv_index_max[0];
+  const niv = uv < 3 ? 'Faible' : uv < 6 ? 'Modéré' : uv < 8 ? 'Élevé' : uv < 11 ? 'Très élevé' : 'Extrême';
+  let finUV = null;                                    // dernière heure du jour avec UV ≥ 3
+  for (let k = k0; k < h.time.length && h.time[k].slice(0, 10) === c.time.slice(0, 10); k++) if ((h.uv_index?.[k] ?? 0) >= 3) finUV = h.time[k].slice(11, 13);
+  const conseilUV = finUV ? `Utilisez un écran solaire jusqu'à ${+finUV + 1}:00.` : uv >= 3 ? 'Utilisez un écran solaire.' : 'Faible jusqu’à la fin de la journée.';
+  const lev = dl.sunrise[0].slice(11, 16), cou = dl.sunset[0].slice(11, 16);
+  const minutes = (s) => +s.slice(0, 2) * 60 + +s.slice(3, 5);
+  const maintenant = minutes(c.time.slice(11, 16));
+  const u = Math.min(Math.max((maintenant - minutes(lev)) / (minutes(cou) - minutes(lev)), -0.5), 1.5);
+  const soleilPasse = maintenant > minutes(cou), avantLever = maintenant < minutes(lev);
+  const vis = (h.visibility[k0] || 0) / 1000;
+  const [lp, ln] = lune(Date.now());
+  const illum = Math.round((1 - Math.cos(2 * Math.PI * lp)) / 2 * 100);
+  const ressentiTxt = c.apparent_temperature > c.temperature_2m + 1 ? 'Le ressenti est plus élevé que la température réelle.' : c.apparent_temperature < c.temperature_2m - 1 ? 'Le ressenti est plus frais que la température réelle.' : 'Similaire à la température réelle.';
+  const proch = dl.precipitation_sum.findIndex((x, i) => i > 0 && x >= 0.5);
+  // moyennes : écart avec la température maximale moyenne de ce jour (climat 2021-2025)
+  let moy = '';
+  const doy = (d) => { const a = new Date(d.getFullYear(), 0, 1); let n = Math.round((d - a) / 86400000); if (d.getFullYear() % 4 && n >= 59) n += 1; return n; };
+  const norm = NORMALES?.[nom]?.[doy(dateDe(dl.time[0]))];
+  if (norm != null) {
+    const ec = r(dl.temperature_2m_max[0] - norm);
+    moy = `<div class="tuile">${titre('moyennes', 'MOYENNES')}<div class="gros">${ec > 0 ? '+' : ''}${ec}°</div>
+      <div class="moy petit">${ec > 0 ? 'au-dessus' : ec < 0 ? 'en dessous' : 'au niveau'} des temp. max. quotidiennes moyennes</div>
+      <p class="duo"><span>Aujourd'hui</span><b>Max. : ${r(dl.temperature_2m_max[0])}°</b><span>Moyenne</span><b>Max. : ${r(norm)}°</b></p></div>`;
+  }
+  return moy + `
+    <div class="tuile">${titre('vent', 'VENT')}<div class="centre">${boussole(r(c.wind_speed_10m), (c.wind_direction_10m + 180) % 360)}</div>
+      <p>Rafales : ${r(c.wind_gusts_10m)} km/h ${dir(c.wind_direction_10m)}</p></div>
+    <div class="tuile">${titre('lune', ln.toUpperCase())}<div class="centre">${lunePhoto(lp)}</div><p class="c">Éclairée à ${illum} %</p></div>
+    <div class="tuile">${titre('coucher', soleilPasse || avantLever ? 'LEVER' : 'COUCHER')}<div class="gros">${soleilPasse ? dl.sunrise[1].slice(11, 16) : avantLever ? lev : cou}</div>${courbeSoleil(u)}
+      <p>${soleilPasse || avantLever ? 'Coucher : ' + cou : 'Lever : ' + lev}</p></div>
+    <div class="tuile">${titre('uv', 'INDICE UV')}<div class="gros">${r(uv)}</div><div class="moy">${niv}</div><div class="uvbar"><em style="left:${Math.min(uv, 12) / 12 * 100}%"></em></div><p>${conseilUV}</p></div>
+    <div class="tuile">${titre('ressenti', 'RESSENTI')}<div class="gros">${r(c.apparent_temperature)}°</div><p>${ressentiTxt}</p></div>
+    <div class="tuile">${titre('pluie', 'PRÉCIPITATIONS')}<div class="gros">${(dl.precipitation_sum[0] || 0).toFixed(1).replace('.', ',')} mm</div><div class="moy">Aujourd'hui</div>
+      <p>${proch > 0 ? `Prochaines précipitations : ${(dl.precipitation_sum[proch]).toFixed(1).replace('.', ',')} mm ${proch === 1 ? 'demain' : JOURS_L[dateDe(dl.time[proch]).getDay()]}.` : 'Aucune précipitation notable prévue.'}</p></div>
+    <div class="tuile">${titre('visibilite', 'VISIBILITÉ')}<div class="gros">${vis.toFixed(0)} km</div><p>${vis >= 10 ? 'Vue parfaitement dégagée.' : vis >= 4 ? 'Légère brume.' : 'Visibilité réduite.'}</p></div>
+    <div class="tuile">${titre('humidite', 'HUMIDITÉ')}<div class="gros">${r(c.relative_humidity_2m)} %</div><p>Le point de rosée est de ${r(rosee(c.temperature_2m, c.relative_humidity_2m))}° en ce moment.</p></div>`;
+}
+function rosee(t, hr) { const a = 17.27, b = 237.7, g = a * t / (b + t) + Math.log(Math.max(hr, 1) / 100); return b * g / (a - g); }
 
 function remplirListe() {
   if (!DATA) return;
@@ -248,6 +328,17 @@ async function actualiser() {
     if (Math.abs(dx) > 80 && DATA) choisir((choix + (dx < 0 ? 1 : VILLAGES.length - 1)) % VILLAGES.length);
   }, { passive: true });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  // en-tête compact quand on fait défiler (comme l'iPhone : « Moba 23° | Nuageux »)
+  window.addEventListener('scroll', () => document.body.classList.toggle('compact', window.scrollY > 230), { passive: true });
+  // installation : bouton sur Android / Windows, aide sur iPhone
+  let invite = null;
+  const autonome = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); invite = e; if (!autonome) $('installer').classList.remove('cache'); });
+  $('installer').onclick = async () => {
+    if (invite) { invite.prompt(); await invite.userChoice; invite = null; $('installer').classList.add('cache'); }
+    else $('aide-ios').classList.toggle('cache');
+  };
+  if (!autonome && /iphone|ipad|ipod/i.test(navigator.userAgent)) $('installer').classList.remove('cache');
   await actualiser();
   setInterval(actualiser, 10 * 60 * 1000);               // temps réel : toutes les 10 minutes
   window.addEventListener('online', actualiser);

@@ -101,3 +101,25 @@ h1 { margin: 2px 0 0; font-size: 36px; font-weight: 500; }
   .entete, #alertes, .pied { grid-column: 1 / -1; }
   .tuiles { grid-column: 2; grid-row: 3 / span 2; align-content: start; }
 }
+
+/* tuiles façon iPhone */
+.tuile .tt { display: flex; align-items: center; gap: 6px; text-transform: uppercase; }
+.tuile .tt svg { margin: 0; color: var(--doux); flex: none; }
+.tuile .centre { display: flex; justify-content: center; align-items: center; flex: 1; }
+.tuile p.c { text-align: center; }
+.tuile p.duo { display: grid; grid-template-columns: auto auto; gap: 2px 10px; font-size: 14px; }
+.tuile p.duo span { color: var(--doux); } .tuile p.duo b { text-align: right; }
+.tuile .moy { font-size: 16px; line-height: 1.25; }
+/* en-tête compact au défilement */
+.mini { position: fixed; top: 0; left: 0; right: 0; z-index: 40; text-align: center; padding: calc(env(safe-area-inset-top) + 10px) 0 10px; font-weight: 600; font-size: 18px;
+  background: rgba(20, 50, 100, .35); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); transform: translateY(-110%); transition: transform .25s; }
+body.compact .mini { transform: none; }
+.installer { display: block; width: 100%; margin: 0 0 12px; padding: 12px; border-radius: 14px; background: #fff; color: #1f5fb0; font-weight: 700; font-size: 16px; }
+.aide { background: rgba(0,0,0,.35); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; font-size: 15px; line-height: 1.4; }
+.cache.installer, .cache.aide { display: none; }
+@media (min-width: 900px) { .installer, .aide { grid-column: 1 / -1; } }
+
+.tuile .moy.petit { font-size: 14px; font-weight: 600; }
+.tuile p.duo { grid-template-columns: 1fr auto; font-size: 13px; }
+.tuile p.duo b { white-space: nowrap; }
+.tuile p.duo { font-size: 12.5px; gap: 2px 6px; }

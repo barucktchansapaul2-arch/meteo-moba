@@ -1,6 +1,6 @@
 // Mode hors ligne : l'application s'ouvre même sans connexion (la dernière météo est gardée par l'appli).
-const VERSION = 'rtm-meteo-v1';
-const FICHIERS = ['./', 'index.html', 'style.css', 'app.js', 'villages.json', 'manifest.webmanifest',
+const VERSION = 'rtm-meteo-v2';
+const FICHIERS = ['./', 'index.html', 'style.css', 'app.js', 'villages.json', 'normales.json', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/logo.png',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'];
