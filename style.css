@@ -1,0 +1,103 @@
+:root {
+  --carte: rgba(20, 60, 120, .32);
+  --bord: rgba(255, 255, 255, .14);
+  --texte: #fff;
+  --doux: rgba(255, 255, 255, .62);
+  --police: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html { background: #0a1934; }
+body { margin: 0; min-height: 100%; color: var(--texte); font-family: var(--police); background: transparent; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+/* ciel animé selon la météo (comme l'appli iPhone) */
+.ciel { position: fixed; inset: 0; z-index: 0; transition: background 1s; }
+.jour-clair { background: linear-gradient(180deg, #2f7fd6 0%, #4f9be6 45%, #78b6ef 100%); }
+.jour-nuage { background: linear-gradient(180deg, #5a7896 0%, #7d97b0 50%, #9fb3c6 100%); }
+.jour-pluie { background: linear-gradient(180deg, #3d4f63 0%, #56687c 50%, #6f8194 100%); }
+.jour-orage { background: linear-gradient(180deg, #23283a 0%, #3a4157 50%, #565d75 100%); }
+.nuit-clair { background: linear-gradient(180deg, #0b1630 0%, #1b2b52 55%, #2c3f6e 100%); }
+.nuit-nuage { background: linear-gradient(180deg, #161d2c 0%, #283247 55%, #3a465e 100%); }
+.ciel::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% -10%, rgba(255,255,255,.35), transparent 45%); pointer-events: none; }
+.jour-clair::after { background: radial-gradient(circle at 50% -5%, rgba(255,250,220,.55), transparent 40%); }
+
+#app { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 10px) 14px 110px; }
+.entete { text-align: center; padding: 6px 0 22px; text-shadow: 0 1px 6px rgba(0,0,0,.18); }
+.haut { display: flex; justify-content: space-between; align-items: center; }
+.logo { height: 38px; border-radius: 8px; }
+.etat { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 20px; background: rgba(0,0,0,.18); }
+.etat.ok { color: #6cffa8; } .etat.ko { color: #ffb0a8; }
+.lieu { margin-top: 14px; font-size: 13px; font-weight: 700; letter-spacing: .06em; opacity: .9; }
+.fleche { display: inline-block; transform: rotate(-45deg); font-size: 11px; }
+h1 { margin: 2px 0 0; font-size: 36px; font-weight: 500; }
+.temp { font-size: 104px; font-weight: 200; line-height: 1; margin-left: 28px; }
+.cond { font-size: 22px; font-weight: 600; margin-top: 4px; }
+.hl { font-size: 20px; font-weight: 600; margin-top: 2px; }
+
+.carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 18px; padding: 12px 14px; margin-bottom: 12px; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+.titre-carte { font-size: 13px; font-weight: 700; color: var(--doux); letter-spacing: .04em; padding-bottom: 8px; border-bottom: 1px solid var(--bord); }
+#resume-jour { text-transform: none; letter-spacing: 0; font-weight: 600; color: #fff; font-size: 15px; }
+
+.heures { display: flex; overflow-x: auto; gap: 4px; padding-top: 10px; scrollbar-width: none; }
+.heures::-webkit-scrollbar { display: none; }
+.h { min-width: 58px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 600; }
+.h small { font-size: 15px; }
+.h .pp { font-size: 12px; color: #8fd0ff; height: 14px; }
+.h b { font-size: 20px; font-weight: 600; }
+
+.j { display: grid; grid-template-columns: 58px 44px 40px 1fr 40px; align-items: center; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--bord); font-size: 19px; font-weight: 600; }
+.j:last-child { border-bottom: 0; }
+.j .ic { display: flex; flex-direction: column; align-items: center; }
+.j .ic span { font-size: 11px; color: #8fd0ff; }
+.j .mn { color: var(--doux); text-align: right; }
+.barre-t { position: relative; height: 5px; border-radius: 3px; background: rgba(0,0,0,.22); }
+.barre-t i { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.barre-t em { position: absolute; top: -2px; width: 9px; height: 9px; border-radius: 50%; background: #fff; border: 2px solid rgba(0,0,0,.25); transform: translateX(-50%); }
+
+.tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.tuile { background: var(--carte); border: 1px solid var(--bord); border-radius: 18px; padding: 12px 14px; min-height: 160px; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); display: flex; flex-direction: column; }
+.tuile .tt { font-size: 12px; font-weight: 700; color: var(--doux); letter-spacing: .05em; margin-bottom: 6px; }
+.tuile .gros { font-size: 34px; font-weight: 500; }
+.tuile .moy { font-size: 18px; font-weight: 600; }
+.tuile p { margin: auto 0 0; font-size: 14px; line-height: 1.3; }
+.uvbar { height: 5px; border-radius: 3px; margin: 10px 0; position: relative; background: linear-gradient(90deg, #3ddc84, #f3e03a, #f0a03a, #e5484d, #c04dff); }
+.uvbar em { position: absolute; top: -2px; width: 9px; height: 9px; border-radius: 50%; background: #fff; border: 2px solid rgba(0,0,0,.3); transform: translateX(-50%); }
+.tuile svg { display: block; margin: 4px auto 0; }
+
+.carte-geo { height: 360px; border-radius: 12px; margin-top: 10px; overflow: hidden; }
+.mk { background: rgba(20,50,100,.85); color: #fff; border: 1px solid rgba(255,255,255,.6); border-radius: 14px; padding: 2px 7px; font: 700 13px var(--police); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+.leaflet-div-icon { background: none; border: 0; }
+
+#alertes .alerte { background: rgba(229, 72, 77, .85); border-radius: 14px; padding: 10px 14px; margin-bottom: 12px; font-weight: 600; font-size: 15px; }
+#alertes .alerte.orange { background: rgba(240, 120, 30, .85); }
+
+.pied { text-align: center; font-size: 12px; color: var(--doux); padding: 10px 6px; }
+.pied .credit { color: #ffd479; font-style: italic; }
+
+.barre { position: fixed; z-index: 50; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: center; padding: 10px 22px calc(env(safe-area-inset-bottom) + 10px); background: rgba(20, 50, 100, .35); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--bord); }
+.barre button { font-size: 24px; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,.12); }
+.points { display: flex; gap: 6px; max-width: 60%; overflow: hidden; }
+.points i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.35); flex: none; }
+.points i.on { background: #fff; }
+
+.liste { position: fixed; inset: 0; background: #08142c; z-index: 1000; overflow-y: auto; padding: calc(env(safe-area-inset-top) + 14px) 14px 30px; transition: transform .3s; }
+.liste.cache { transform: translateY(100%); }
+.liste-entete { display: flex; justify-content: space-between; align-items: center; max-width: 560px; margin: 0 auto; }
+.liste-entete h2 { font-size: 30px; margin: 6px 0; }
+.liste-entete button { font-size: 22px; }
+#cherche { display: block; width: 100%; max-width: 560px; margin: 8px auto 14px; padding: 10px 14px; border-radius: 12px; border: 0; font-size: 16px; background: rgba(255,255,255,.12); color: #fff; }
+#liste-items { max-width: 560px; margin: 0 auto; }
+.ligne { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left; padding: 14px 16px; margin-bottom: 10px; border-radius: 16px; background: linear-gradient(120deg, #2f7fd6, #78b6ef); }
+.ligne.nuage { background: linear-gradient(120deg, #5a7896, #9fb3c6); }
+.ligne.pluie { background: linear-gradient(120deg, #3d4f63, #6f8194); }
+.ligne.orage { background: linear-gradient(120deg, #23283a, #565d75); }
+.ligne.nuit { background: linear-gradient(120deg, #0b1630, #2c3f6e); }
+.ligne b { font-size: 21px; display: block; } .ligne small { opacity: .85; font-size: 14px; }
+.ligne .lt { font-size: 40px; font-weight: 300; }
+
+@media (min-width: 900px) {
+  #app { max-width: 1080px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 16px; }
+  #app > * { min-width: 0; }
+  .entete, #alertes, .pied { grid-column: 1 / -1; }
+  .tuiles { grid-column: 2; grid-row: 3 / span 2; align-content: start; }
+}

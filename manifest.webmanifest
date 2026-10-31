@@ -1,0 +1,16 @@
+{
+  "name": "R.T.M Météo Moba",
+  "short_name": "Météo Moba",
+  "description": "Météo en temps réel des 34 localités du territoire de Moba — R.T.M Radio Télévision Moba",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a1934",
+  "theme_color": "#1f5fb0",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

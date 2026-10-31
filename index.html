@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>R.T.M Météo Moba</title>
+<meta name="description" content="Météo en temps réel des 34 localités du territoire de Moba (Tanganyika, RDC) — R.T.M Radio Télévision Moba">
+<meta name="theme-color" content="#1f5fb0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Météo Moba">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://server.arcgisonline.com https://cdnjs.cloudflare.com; connect-src 'self' https://api.open-meteo.com; manifest-src 'self'; worker-src 'self'">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="ciel" class="ciel jour-clair"></div>
+<main id="app">
+  <header class="entete">
+    <div class="haut">
+      <img src="icons/logo.png" alt="R.T.M" class="logo">
+      <span id="etat" class="etat">●</span>
+    </div>
+    <button id="choix" class="lieu" aria-label="Choisir une localité"><span class="fleche">➤</span> <span id="sous-lieu">TERRITOIRE DE MOBA</span></button>
+    <h1 id="nom">—</h1>
+    <div id="temp" class="temp">--°</div>
+    <div id="cond" class="cond">Chargement…</div>
+    <div id="hl" class="hl"></div>
+  </header>
+
+  <div id="alertes"></div>
+
+  <section class="carte">
+    <div class="titre-carte"><span id="resume-jour">Conditions météo</span></div>
+    <div id="heures" class="heures"></div>
+  </section>
+
+  <section class="carte">
+    <div class="titre-carte">📅 PRÉVISIONS SUR 10 JOURS</div>
+    <div id="jours"></div>
+  </section>
+
+  <section class="tuiles" id="tuiles"></section>
+
+  <section class="carte">
+    <div class="titre-carte">🗺 CARTE DES 34 LOCALITÉS</div>
+    <div id="carte" class="carte-geo"></div>
+  </section>
+
+  <footer class="pied">
+    <p id="maj"></p>
+    <p>Données : Open-Meteo · Positions GPS : GRID3 / Ministère de la Santé</p>
+    <p class="credit">Cette application a été développée par l'ingénieur BARUCK TCHANSA PAUL sous la supervision de l'ingénieur DALYOS KAPUTA</p>
+    <p>© R.T.M — Radio Télévision Moba</p>
+  </footer>
+</main>
+
+<nav class="barre">
+  <button id="btn-carte" aria-label="Carte">🗺</button>
+  <div class="points" id="points"></div>
+  <button id="btn-liste" aria-label="Liste des localités">☰</button>
+</nav>
+
+<div id="liste" class="liste cache" role="dialog" aria-label="Localités">
+  <div class="liste-entete"><h2>Météo · Moba</h2><button id="fermer" aria-label="Fermer">✕</button></div>
+  <input id="cherche" type="search" placeholder="Rechercher une localité" autocomplete="off">
+  <div id="liste-items"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
