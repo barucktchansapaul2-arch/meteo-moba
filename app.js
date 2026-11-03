@@ -81,10 +81,10 @@ function valider(d) {
 async function telecharger() {
   const p = new URLSearchParams({
     latitude: VILLAGES.map((v) => v[1]).join(','), longitude: VILLAGES.map((v) => v[2]).join(','),
-    current: 'temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,precipitation,uv_index,surface_pressure',
+    current: 'temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,uv_index,surface_pressure',
     hourly: 'temperature_2m,weather_code,is_day,precipitation_probability,visibility,uv_index',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,sunrise,sunset,uv_index_max,wind_speed_10m_max',
-    timezone: 'Africa/Lubumbashi', forecast_days: 10,
+    timezone: 'Africa/Lubumbashi', forecast_days: 10, forecast_hours: 48,   // 165 localités : heure par heure limité à 48 h (plus léger sur téléphone)
   });
   const ctl = new AbortController(); const minuteur = setTimeout(() => ctl.abort(), 30000);
   try {
@@ -348,6 +348,6 @@ async function actualiser() {
   };
   if (!autonome && /iphone|ipad|ipod/i.test(navigator.userAgent)) $('installer').classList.remove('cache');
   await actualiser();
-  setInterval(actualiser, 10 * 60 * 1000);               // temps réel : toutes les 10 minutes
+  setInterval(actualiser, 30 * 60 * 1000);               // temps réel : toutes les 30 minutes
   window.addEventListener('online', actualiser);
 })();
