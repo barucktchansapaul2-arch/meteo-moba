@@ -110,7 +110,7 @@ async function openMeteo() {
     current: 'temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,uv_index,surface_pressure',
     hourly: 'temperature_2m,weather_code,is_day,precipitation_probability,visibility,uv_index',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,sunrise,sunset,uv_index_max,wind_speed_10m_max',
-    timezone: 'Africa/Lubumbashi', forecast_days: 10, forecast_hours: 48,   // 165 localités : heure par heure limité à 48 h (plus léger sur téléphone)
+    timezone: 'Africa/Lubumbashi', forecast_days: 10, forecast_hours: 48,   // toutes les localités : heure par heure limité à 48 h (plus léger sur téléphone)
   });
   const ctl = new AbortController(); const minuteur = setTimeout(() => ctl.abort(), 60000);
   try {
@@ -282,7 +282,7 @@ function tuiles(c, dl, h, k0, nom) {
   // moyennes : écart avec la température maximale moyenne de ce jour (climat 2021-2025)
   let moy = '';
   const doy = (d) => { const a = new Date(d.getFullYear(), 0, 1); let n = Math.round((d - a) / 86400000); if (d.getFullYear() % 4 && n >= 59) n += 1; return n; };
-  const norm = NORMALES?.[nom]?.[doy(dateDe(dl.time[0]))];
+  const norm = (Array.isArray(NORMALES) ? NORMALES[choix] : NORMALES?.[nom])?.[doy(dateDe(dl.time[0]))];
   if (norm != null) {
     const ec = r(dl.temperature_2m_max[0] - norm);
     moy = `<div class="tuile">${titre('moyennes', 'MOYENNES')}<div class="gros">${ec > 0 ? '+' : ''}${ec}°</div>
@@ -307,10 +307,10 @@ function rosee(t, hr) { const a = 17.27, b = 237.7, g = a * t / (b + t) + Math.l
 function remplirListe() {
   if (!DATA) return;
   const q = ($('cherche').value || '').trim().toUpperCase();
-  $('liste-items').innerHTML = VILLAGES.map((v, i) => [v, i]).filter(([v]) => !q || v[0].includes(q)).map(([v, i]) => {
+  $('liste-items').innerHTML = VILLAGES.map((v, i) => [v, i]).filter(([v]) => !q || v[0].includes(q) || (v[3] || '').toUpperCase().includes(q)).map(([v, i]) => {
     const c = DATA.d[i].current, dl = DATA.d[i].daily;
     const amb = ambiance(c.weather_code, c.is_day), cls = amb.startsWith('nuit') ? 'nuit' : amb.replace('jour-', '').replace('clair', '');
-    return `<button class="ligne ${cls}" data-i="${i}"><span><b>${esc(v[0].charAt(0) + v[0].slice(1).toLowerCase())}</b><small>${esc(libelle(c.weather_code, c.is_day))}<br>↑ ${r(dl.temperature_2m_max[0])}°  ↓ ${r(dl.temperature_2m_min[0])}°</small></span><span class="lt">${r(c.temperature_2m)}°</span></button>`;
+    return `<button class="ligne ${cls}" data-i="${i}"><span><b>${esc(v[0].charAt(0) + v[0].slice(1).toLowerCase())}</b><small>${v[3] ? esc(v[3]) + '<br>' : ''}${esc(libelle(c.weather_code, c.is_day))}<br>↑ ${r(dl.temperature_2m_max[0])}°  ↓ ${r(dl.temperature_2m_min[0])}°</small></span><span class="lt">${r(c.temperature_2m)}°</span></button>`;
   }).join('');
 }
 
