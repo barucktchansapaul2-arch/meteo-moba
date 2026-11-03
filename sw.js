@@ -1,6 +1,6 @@
 // Mode hors ligne : l'application s'ouvre même sans connexion (la dernière météo est gardée par l'appli).
-const VERSION = 'rtm-meteo-v6';
-const FICHIERS = ['./', 'index.html', 'style.css?v=6', 'app.js?v=6', 'astre.js?v=6', 'villages.json', 'normales.json', 'manifest.webmanifest',
+const VERSION = 'rtm-meteo-v7';
+const FICHIERS = ['./', 'index.html', 'style.css?v=7', 'app.js?v=7', 'astre.js?v=7', 'villages.json', 'normales.json', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-192-maskable.png', 'icons/icon-512-maskable.png', 'icons/favicon.png', 'icons/logo.png', 'icons/lune.png',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'];
@@ -13,7 +13,7 @@ self.addEventListener('activate', (e) => {
 });
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.hostname === 'api.open-meteo.com') return;   // la météo passe toujours par le réseau
+  if (e.request.method !== 'GET' || url.hostname === 'api.open-meteo.com' || url.pathname.endsWith('/meteo.json')) return;   // la météo passe toujours par le réseau
   e.respondWith(
     fetch(e.request).then((rep) => {
       if (rep.ok && (url.origin === location.origin || url.hostname === 'cdnjs.cloudflare.com')) {

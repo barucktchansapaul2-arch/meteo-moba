@@ -78,7 +78,33 @@ function valider(d) {
   return arr;
 }
 
+function garder(d, quand) {
+  try { localStorage.setItem('rtm-meteo', JSON.stringify({ quand, d })); } catch (e) { /* plein */ }
+}
+
+// météo préparée toutes les heures par le site (un seul appel à Open-Meteo pour tous les téléphones)
+async function fichierSite() {
+  const ctl = new AbortController(); const minuteur = setTimeout(() => ctl.abort(), 60000);
+  try {
+    const rep = await fetch('meteo.json?t=' + Date.now(), { signal: ctl.signal, cache: 'no-store' });
+    if (!rep.ok) throw new Error('HTTP ' + rep.status);
+    const m = await rep.json();
+    return { d: valider(m.d), quand: +m.quand };
+  } finally { clearTimeout(minuteur); }
+}
+
 async function telecharger() {
+  let site = null;
+  try { site = await fichierSite(); } catch (e) { /* fichier absent ou réseau lent */ }
+  if (site && Date.now() - site.quand < 3 * 3600 * 1000) { garder(site.d, site.quand); return { ...site, enLigne: true }; }
+  try { return await openMeteo(); }
+  catch (e) {
+    if (site) { garder(site.d, site.quand); return { ...site, enLigne: false }; }
+    throw e;
+  }
+}
+
+async function openMeteo() {
   const p = new URLSearchParams({
     latitude: VILLAGES.map((v) => v[1]).join(','), longitude: VILLAGES.map((v) => v[2]).join(','),
     current: 'temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,uv_index,surface_pressure',
@@ -86,12 +112,12 @@ async function telecharger() {
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,sunrise,sunset,uv_index_max,wind_speed_10m_max',
     timezone: 'Africa/Lubumbashi', forecast_days: 10, forecast_hours: 48,   // 165 localités : heure par heure limité à 48 h (plus léger sur téléphone)
   });
-  const ctl = new AbortController(); const minuteur = setTimeout(() => ctl.abort(), 30000);
+  const ctl = new AbortController(); const minuteur = setTimeout(() => ctl.abort(), 60000);
   try {
     const rep = await fetch(`${API}?${p}`, { signal: ctl.signal, cache: 'no-store' });
     if (!rep.ok) throw new Error('HTTP ' + rep.status);
     const d = valider(await rep.json());
-    try { localStorage.setItem('rtm-meteo', JSON.stringify({ quand: Date.now(), d })); } catch (e) { /* plein */ }
+    garder(d, Date.now());
     return { d, enLigne: true, quand: Date.now() };
   } finally { clearTimeout(minuteur); }
 }
@@ -335,7 +361,11 @@ async function actualiser() {
     const dx = e.changedTouches[0].clientX - x0; x0 = null;
     if (Math.abs(dx) > 80 && DATA) choisir((choix + (dx < 0 ? 1 : VILLAGES.length - 1)) % VILLAGES.length);
   }, { passive: true });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    // nouvelle version publiée : la page se recharge seule, les téléphones déjà installés se mettent à jour
+    if (navigator.serviceWorker.controller) navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((r) => r.update()).catch(() => {});
+  }
   // en-tête compact quand on fait défiler (comme l'iPhone : « Moba 23° | Nuageux »)
   window.addEventListener('scroll', () => document.body.classList.toggle('compact', window.scrollY > 230), { passive: true });
   // installation : bouton sur Android / Windows, aide sur iPhone
